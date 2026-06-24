@@ -1,5 +1,6 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DEFAULT_CONTACT_TO_EMAIL = 'jerem.quiambao@gmail.com'
+const nodemailer = require('nodemailer')
 
 const escapeHtml = (value = '') =>
   value
@@ -48,15 +49,16 @@ module.exports = async (req, res) => {
     return res.status(400).json({ ok: false, message: 'Please enter a valid email address.' })
   }
 
-  const resendApiKey = process.env.RESEND_API_KEY
+  const gmailUser = process.env.GMAIL_USER
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD
   const contactToEmail = process.env.CONTACT_TO_EMAIL || DEFAULT_CONTACT_TO_EMAIL
-  const contactFromEmail = process.env.CONTACT_FROM_EMAIL
+  const contactFromEmail = gmailUser
 
-  if (!resendApiKey || !contactFromEmail) {
+  if (!gmailUser || !gmailAppPassword) {
     return res.status(500).json({
       ok: false,
       message:
-        'Email service is not configured yet. Add RESEND_API_KEY and CONTACT_FROM_EMAIL in your Vercel environment variables.',
+        'Email service is not configured yet. Add GMAIL_USER and GMAIL_APP_PASSWORD in your Vercel environment variables.',
     })
   }
 
@@ -64,27 +66,28 @@ module.exports = async (req, res) => {
   const safeEmail = escapeHtml(email)
   const safeSubject = escapeHtml(subject)
   const safeMessage = escapeHtml(message).replace(/\n/g, '<br>')
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
+  })
 
   try {
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: contactFromEmail,
-        to: [contactToEmail],
-        subject: `Portfolio Contact: ${subject}`,
-        reply_to: email,
-        html: `
-          <h2>New Portfolio Contact</h2>
-          <p><strong>Name:</strong> ${safeName}</p>
-          <p><strong>Email:</strong> ${safeEmail}</p>
-          <p><strong>Subject / Project Type:</strong> ${safeSubject}</p>
-          <p><strong>Message:</strong><br>${safeMessage}</p>
-        `,
-        text: `New Portfolio Contact
+    await transporter.sendMail({
+      from: contactFromEmail,
+      to: contactToEmail,
+      replyTo: email,
+      subject: `Portfolio Contact: ${subject}`,
+      html: `
+        <h2>New Portfolio Contact</h2>
+        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
+        <p><strong>Subject / Project Type:</strong> ${safeSubject}</p>
+        <p><strong>Message:</strong><br>${safeMessage}</p>
+      `,
+      text: `New Portfolio Contact
 
 Name: ${name}
 Email: ${email}
@@ -92,25 +95,7 @@ Subject / Project Type: ${subject}
 
 Message:
 ${message}`,
-      }),
     })
-
-    if (!resendResponse.ok) {
-      const errorPayload = await resendResponse.text()
-      let resendMessage = 'Resend request failed.'
-
-      if (errorPayload) {
-        try {
-          const parsedPayload = JSON.parse(errorPayload)
-          resendMessage =
-            parsedPayload.message || parsedPayload.error || resendMessage
-        } catch (parseError) {
-          resendMessage = errorPayload
-        }
-      }
-
-      throw new Error(resendMessage)
-    }
 
     return res.status(200).json({ ok: true, message: 'Thanks! Your message has been sent.' })
   } catch (error) {

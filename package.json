@@ -1,0 +1,9 @@
+{
+  "name": "jeremiah-quiambao-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Portfolio website with a Vercel contact form endpoint.",
+  "dependencies": {
+    "nodemailer": "^6.10.1"
+  }
+}

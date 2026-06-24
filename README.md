@@ -1,6 +1,6 @@
 # Jeremiah Quiambao Portfolio
 
-Static portfolio site with a Vercel-style serverless contact endpoint in `api/contact.js`.
+Static portfolio site with a Vercel serverless contact endpoint in `api/contact.js`.
 
 ## Project structure
 
@@ -25,13 +25,13 @@ The contact form posts to `/api/contact` and sends messages to `jerem.quiambao@g
 
 Set these in your Vercel project settings:
 
-- `RESEND_API_KEY`: your Resend API key
+- `GMAIL_USER`: your Gmail address, such as `jerem.quiambao@gmail.com`
+- `GMAIL_APP_PASSWORD`: your 16-character Google app password
 - `CONTACT_TO_EMAIL`: `jerem.quiambao@gmail.com`
-- `CONTACT_FROM_EMAIL`: a verified sender email from your domain, such as `hello@yourdomain.com`
 
 ### Important note
 
-The form will not send real messages until `CONTACT_FROM_EMAIL` is a verified sender in Resend. If that sender is missing or not verified, the frontend will show a readable error instead of failing silently.
+The form uses Gmail SMTP through the same account in `GMAIL_USER`, so you must create a Google app password first. App passwords require Google 2-Step Verification to be enabled on that account. If `GMAIL_USER` or `GMAIL_APP_PASSWORD` is missing, the frontend will show a readable error instead of failing silently.
 
 ## Local editing notes
 
