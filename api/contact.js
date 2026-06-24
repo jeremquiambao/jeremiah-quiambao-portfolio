@@ -35,9 +35,9 @@ module.exports = async (req, res) => {
   const email = body.email?.toString().trim() || ''
   const subject = body.subject?.toString().trim() || ''
   const message = body.message?.toString().trim() || ''
-  const companyWebsite = body.company_website?.toString().trim() || ''
+  const contactReference = body.contact_reference?.toString().trim() || ''
 
-  if (companyWebsite) {
+  if (contactReference) {
     return res.status(200).json({ ok: true, message: 'Message received.' })
   }
 
